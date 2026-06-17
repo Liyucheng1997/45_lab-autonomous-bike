@@ -1,0 +1,19 @@
+{
+  "name": "autonomous-bike-sim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Three.js simulation of an autonomous self-balancing bicycle (XUAN-style: reaction wheel + steering + LQR)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lil-gui": "^0.19.2",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

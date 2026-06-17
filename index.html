@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>自动驾驶自行车仿真 · XUAN 复刻</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e14; }
+      #app { width: 100vw; height: 100vh; }
+      #hud {
+        position: fixed; left: 12px; top: 12px; z-index: 10;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: #cdd6f4; background: rgba(17,20,30,0.72); backdrop-filter: blur(6px);
+        border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px;
+        min-width: 220px; pointer-events: none;
+      }
+      #hud b { color: #89dceb; font-weight: 600; }
+      #hud .row { display: flex; justify-content: space-between; gap: 16px; }
+      #hud .warn { color: #f38ba8; }
+      #hud .ok { color: #a6e3a1; }
+      #title { font-size: 13px; color: #f9e2af; margin-bottom: 6px; }
+      canvas { display: block; }
+      #scope {
+        position: fixed; right: 12px; bottom: 12px; z-index: 10;
+        border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+        background: rgba(17,20,30,0.72); backdrop-filter: blur(6px);
+      }
+      #help {
+        position: fixed; left: 12px; bottom: 12px; z-index: 10;
+        font: 11px/1.5 ui-monospace, monospace; color: #7f849c;
+        background: rgba(17,20,30,0.6); border-radius: 8px; padding: 6px 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud"><div id="title">⏳ 加载中…</div></div>
+    <canvas id="scope" width="280" height="120"></canvas>
+    <div id="help">鼠标拖动旋转视角 · 滚轮缩放 · 空格=踢一脚扰动 · R=复位 · 右上面板调参</div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
