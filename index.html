@@ -3,42 +3,131 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>自动驾驶自行车仿真 · XUAN 复刻</title>
+    <title>XUAN-AV 自动驾驶自行车</title>
     <style>
-      :root { color-scheme: dark; }
+      :root { color-scheme: dark; --accent: #ff5f1f; --cyan: #40e0ff; --panel: rgba(14, 17, 24, 0.78); --line: rgba(255, 255, 255, 0.09); --text: #d7dce6; --muted: #8b93a7; }
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e14; }
-      #app { width: 100vw; height: 100vh; }
-      #hud {
-        position: fixed; left: 12px; top: 12px; z-index: 10;
-        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        color: #cdd6f4; background: rgba(17,20,30,0.72); backdrop-filter: blur(6px);
-        border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px;
-        min-width: 220px; pointer-events: none;
-      }
-      #hud b { color: #89dceb; font-weight: 600; }
-      #hud .row { display: flex; justify-content: space-between; gap: 16px; }
-      #hud .warn { color: #f38ba8; }
-      #hud .ok { color: #a6e3a1; }
-      #title { font-size: 13px; color: #f9e2af; margin-bottom: 6px; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e14; font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--text); }
+      #app { position: fixed; inset: 0; }
       canvas { display: block; }
-      #scope {
-        position: fixed; right: 12px; bottom: 12px; z-index: 10;
-        border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
-        background: rgba(17,20,30,0.72); backdrop-filter: blur(6px);
-      }
-      #help {
-        position: fixed; left: 12px; bottom: 12px; z-index: 10;
-        font: 11px/1.5 ui-monospace, monospace; color: #7f849c;
-        background: rgba(17,20,30,0.6); border-radius: 8px; padding: 6px 10px;
-      }
+      .panel { background: var(--panel); backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.35); }
+
+      #topbar { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 20; display: flex; gap: 6px; padding: 6px; align-items: center; }
+      #topbar .grp { display: flex; gap: 4px; padding: 0 4px; }
+      #topbar .grp + .grp { border-left: 1px solid var(--line); padding-left: 8px; }
+      button.b { font: 600 12px/1 inherit; font-family: inherit; color: var(--text); background: rgba(255,255,255,0.06); border: 1px solid transparent; border-radius: 8px; padding: 8px 11px; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s; }
+      button.b:hover { background: rgba(255,255,255,0.13); }
+      button.b.on { background: rgba(64,224,255,0.16); border-color: rgba(64,224,255,0.55); color: #fff; }
+      button.b.danger { background: rgba(216,20,26,0.75); color: #fff; }
+      button.b.danger:hover { background: rgba(240,40,40,0.95); }
+      button.b kbd { font: 10px ui-monospace, monospace; color: var(--muted); margin-left: 4px; }
+
+      #hud { position: fixed; left: 12px; top: 12px; z-index: 10; width: 300px; padding: 12px 14px 10px; font-size: 12px; line-height: 1.7; pointer-events: none; }
+      .hud-title { font-weight: 700; font-size: 14px; letter-spacing: .5px; color: #fff; margin-bottom: 4px; }
+      .hud-title small { font-weight: 500; font-size: 11px; color: var(--muted); margin-left: 6px; }
+      #hud .row { display: grid; grid-template-columns: 74px 1fr auto; gap: 8px; align-items: center; }
+      #hud .row span:first-child { color: var(--muted); }
+      #hud .row b { font: 600 12px ui-monospace, Consolas, monospace; color: #fff; }
+      #hud .row em { font-style: normal; font: 11px ui-monospace, Consolas, monospace; color: var(--muted); }
+      #hud .row.big b { font-size: 13px; }
+      #hud .sep { height: 1px; background: var(--line); margin: 6px 0; }
+      .warn { color: #ffb020 !important; }
+      .bad { color: #ff4d5e !important; }
+      .mode-IDLE { color: #5ce1ff; } .mode-ROUTE, .mode-GOTO { color: #4dff9a; } .mode-MANUAL { color: #c38bff; } .mode-ESTOP { color: #ff4d5e; }
+      .bar { display: inline-block; width: 70px; height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+      .bar i { display: block; height: 100%; background: var(--cyan); }
+      .bar.rw i { background: var(--accent); }
+      #chartWrap { position: fixed; left: 12px; bottom: 12px; z-index: 10; padding: 8px; }
+      #chart { width: 300px; height: 230px; }
+
+      #pipWrap { position: fixed; right: 12px; bottom: 12px; z-index: 10; background: none; backdrop-filter: none; border: none; box-shadow: none; }
+      #pipWrap .cap { font-size: 11px; color: var(--muted); padding: 5px 9px; margin-bottom: 4px; display: flex; justify-content: space-between; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+      #pipWrap .cap b { color: #fff; font-weight: 600; }
+      #pipHole { width: 384px; height: 216px; border-radius: 4px; position: relative; overflow: hidden; outline: 2px solid rgba(255,255,255,0.25); }
+      #pipOverlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+      #help { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 10; font-size: 11px; color: var(--muted); padding: 6px 12px; pointer-events: none; text-align: center; white-space: nowrap; }
+      #toast { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 30; padding: 8px 16px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+
+      .lil-gui.root { position: fixed; top: 64px; right: 12px; z-index: 15; --background-color: rgba(14,17,24,0.88); --widget-color: #262b36; --focus-color: #343a48; --hover-color: #2e3440; --number-color: #40e0ff; --title-background-color: #181c26; border-radius: 10px; overflow: hidden; }
+
+      body.labels-on #hud, body.labels-on #chartWrap { opacity: 0; }
+      #hud, #chartWrap { transition: opacity .3s; }
+      #callouts { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+      #callouts svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+      #callouts polyline { fill: none; stroke: rgba(255,140,70,0.9); stroke-width: 1.3; }
+      #callouts circle { fill: #ff5f1f; stroke: #fff; stroke-width: 1.2; }
+      .hwlabel { position: absolute; width: 230px; height: 46px; font-size: 11px; line-height: 1.3; background: rgba(14,17,24,0.84); border: 1px solid rgba(255,95,31,0.45); border-left: 3px solid var(--accent); border-radius: 6px; padding: 5px 8px; overflow: hidden; }
+      .hwlabel.left { border-left: 1px solid rgba(255,95,31,0.45); border-right: 3px solid var(--accent); text-align: right; }
+      .hwlabel b { color: #fff; font-weight: 600; }
+      .hwlabel em { font-style: normal; color: var(--accent); font: 10px ui-monospace, monospace; margin-left: 6px; }
+      .hwlabel span { color: var(--muted); display: block; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      #bom { position: fixed; inset: 40px 60px; z-index: 40; padding: 16px 20px; overflow: auto; display: none; font-size: 12px; }
+      #bom.show { display: block; }
+      .bom-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+      .bom-head h2 { font-size: 16px; }
+      .bom-head button { background: none; border: none; color: var(--text); font-size: 18px; cursor: pointer; }
+      .bom-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 24px; }
+      #bom h3 { font-size: 13px; color: var(--accent); margin: 12px 0 6px; }
+      table.bom { width: 100%; border-collapse: collapse; }
+      table.bom th, table.bom td { padding: 3px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+      table.bom td:last-child, table.bom th:last-child { text-align: right; font-family: ui-monospace, monospace; }
+      table.bom td:nth-child(3) { font-family: ui-monospace, monospace; color: var(--muted); }
+      table.bom tr.grp td { color: var(--cyan); font-weight: 600; padding-top: 8px; }
+      td.spec { color: var(--muted); font-size: 11px; }
+      .note { color: var(--muted); margin-top: 8px; line-height: 1.6; }
+      .note b { color: #fff; }
+      .eq { font-family: "Cambria Math", serif; font-size: 14px; margin: 6px 0; line-height: 1.7; }
+      .eq small { font-size: 11px; color: var(--muted); }
+      .mats { display: grid; grid-template-columns: repeat(4, auto); gap: 10px; font-family: ui-monospace, monospace; }
+      table.mat { border-left: 1px solid #888; border-right: 1px solid #888; border-radius: 4px; padding: 0 3px; }
+      table.mat td { padding: 1px 5px; text-align: right; font-size: 11px; }
+      .eigs { display: flex; flex-wrap: wrap; gap: 3px; }
+      .eigs span { font: 10px ui-monospace, monospace; padding: 2px 4px; border-radius: 4px; background: rgba(255,77,94,0.18); display: flex; flex-direction: column; align-items: center; }
+      .eigs span.ok { background: rgba(77,255,154,0.18); }
+      .eigs i { font-style: normal; color: var(--muted); font-size: 9px; }
+      #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #0b0e14; z-index: 100; font-size: 14px; color: var(--muted); transition: opacity .5s; }
+      @media (max-width: 1100px) { #chartWrap, #help { display: none; } #pipHole { width: 256px; height: 144px; } }
+      @media (max-width: 760px) { #hud { width: 230px; font-size: 11px; } #topbar { top: auto; bottom: 8px; flex-wrap: wrap; width: calc(100% - 16px); justify-content: center; } #pipWrap { display: none; } }
     </style>
   </head>
   <body>
     <div id="app"></div>
-    <div id="hud"><div id="title">⏳ 加载中…</div></div>
-    <canvas id="scope" width="280" height="120"></canvas>
-    <div id="help">鼠标拖动旋转视角 · 滚轮缩放 · 空格=踢一脚扰动 · R=复位 · 右上面板调参</div>
+    <div id="loading">正在求解 47 组速度点的 LQR 增益、生成车辆与场景…</div>
+    <div id="topbar" class="panel">
+      <div class="grp">
+        <button class="b" data-mode="IDLE">原地平衡<kbd>1</kbd></button>
+        <button class="b" data-mode="ROUTE">环线巡航<kbd>2</kbd></button>
+        <button class="b" data-mode="GOTO">点击导航<kbd>3</kbd></button>
+        <button class="b" data-mode="MANUAL">手动 WASD<kbd>4</kbd></button>
+        <button class="b danger" data-mode="ESTOP">急停<kbd>E</kbd></button>
+      </div>
+      <div class="grp">
+        <button class="b" id="btnPush">推一把<kbd>Space</kbd></button>
+        <button class="b" id="btnReset">复位<kbd>R</kbd></button>
+      </div>
+      <div class="grp">
+        <button class="b" data-cam="chase">追随</button>
+        <button class="b" data-cam="orbit">环绕</button>
+        <button class="b" data-cam="top">俯视</button>
+        <button class="b" data-cam="fpv">车载</button>
+      </div>
+      <div class="grp">
+        <button class="b" id="btnLabels">硬件标注</button>
+        <button class="b" id="btnSensors">感知图层</button>
+        <button class="b" id="btnBOM">BOM / 模型</button>
+      </div>
+    </div>
+    <div id="hud" class="panel"></div>
+    <div id="chartWrap" class="panel"><canvas id="chart" width="600" height="460"></canvas></div>
+    <div id="pipWrap" class="panel">
+      <div class="cap"><span><b>前视 RGB-D 相机</b> · 目标检测</span><span id="pipInfo"></span></div>
+      <div id="pipHole"><canvas id="pipOverlay"></canvas></div>
+    </div>
+    <div id="help" class="panel">拖动旋转 · 滚轮缩放 · 点击导航模式下点地面设目标 · Shift+点击放锥桶 · Space 推一把 · R 复位</div>
+    <div id="callouts" style="display:none"><svg></svg></div>
+    <div id="toast" class="panel"></div>
+    <div id="bom" class="panel"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

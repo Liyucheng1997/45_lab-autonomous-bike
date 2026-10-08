@@ -1,13 +1,14 @@
 {
   "name": "autonomous-bike-sim",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
-  "description": "Three.js simulation of an autonomous self-balancing bicycle (XUAN-style: reaction wheel + steering + LQR)",
+  "description": "Digital twin of an autonomous bicycle: Whipple dynamics + reaction wheel, gain-scheduled LQR, IMU estimation, LiDAR mapping, A* planning, procedural Three.js model",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node test/whipple.test.mjs && node test/lidar.test.mjs && node test/balance.test.mjs && node test/push.test.mjs && node test/autonomy.test.mjs 120"
   },
   "dependencies": {
     "lil-gui": "^0.19.2",
